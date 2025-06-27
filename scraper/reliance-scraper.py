@@ -4,16 +4,21 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import csv
+
+import sys
+import re
+
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from datetime import datetime
+from mongo_data.mongo_connect import db
 
 url = input("Enter the product URL: ")
 
 # ----- CONFIG -----
 PRODUCT_URL = url
 
-CSV_FILE = "price_history.csv"
+
 # ------------------
 
 def init_browser():
@@ -43,17 +48,31 @@ def get_product_title(driver):
     except:
         return "Unknown Product"
 
-def log_price(product_name, price):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    file_exists = os.path.exists(CSV_FILE)
-    
-    with open(CSV_FILE, mode="a", newline='', encoding="utf-8") as file:
-        writer = csv.writer(file)
-        if not file_exists:
-            writer.writerow(["Time", "Product", "Price"])
-        writer.writerow([now, product_name, price])
+def extract_numeric_price(price_str):
+    # Extract the first number (with optional commas and decimals)
+    match = re.search(r'[\d,]+(?:\.\d+)?', price_str.replace('\n', ''))
+    if match:
+        # Remove commas and convert to int (ignore decimals)
+        return int(float(match.group(0).replace(',', '')))
+    raise ValueError(f"Could not extract numeric price from: {price_str}")
 
-    print(f"[LOG] {now} | {product_name} | {price}")
+def log_price_to_mongo(product_name, price, product_url):
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    numeric_price = extract_numeric_price(price)
+    product_doc = {
+        "user_id": None,  # Set this if you have user context
+        "product_url": product_url,
+        "title": product_name,
+        "initial_price": numeric_price,
+        "tracking_mode": "below",  # Default, can be changed
+        "target_price": None,  # Set this if you have a target
+        "current_price": numeric_price,
+        "last_notified_price": None,
+        "scraped_at": now
+    }
+    db.products.insert_one(product_doc)
+    print(f"[MONGO] Inserted: {product_doc}")
+
 
 def main():
     print(">> Starting Price Watcher")
@@ -64,7 +83,7 @@ def main():
         if price:
             print(f"✅ PRICE FOUND: {price}")
             product_name = get_product_title(browser)
-            log_price(product_name, price)
+            log_price_to_mongo(product_name, price, PRODUCT_URL)
         else:
             print("[FAIL] Price not found.")
     finally:
