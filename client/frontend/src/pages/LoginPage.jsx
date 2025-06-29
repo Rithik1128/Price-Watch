@@ -20,10 +20,18 @@ export default function LoginPage() {
 
         <div className="or-divider">OR</div>
 
-        <button className="google-button">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
+        <button className="google-button"
+          onClick={() => {
+            window.location.href = "http://localhost:8000/login/google";
+          }}
+        >
+          <img
+            src="https://www.svgrepo.com/show/475656/google-color.svg"
+            alt="Google"
+          />
           Continue with Google
         </button>
+
 
         <p className="signup-link">
           Don’t have an account? <Link to="/signup">Sign up</Link>
