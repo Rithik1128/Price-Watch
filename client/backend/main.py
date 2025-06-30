@@ -48,11 +48,12 @@ async def login(request: Request):
 async def auth_callback(request: Request):
     token = await oauth.google.authorize_access_token(request)
 
-    user = await oauth.google.get("userinfo", token=token)
+    userinfo_endpoint = oauth.google.server_metadata["userinfo_endpoint"]
+    user = await oauth.google.get(userinfo_endpoint, token=token)
     user_data = user.json()
 
     request.session["user"] = user_data
-    return RedirectResponse(url="http://localhost:5173/dashboard")
+    return RedirectResponse(url="http://localhost:3000/")
 
 
 @app.get("/profile")

@@ -6,3 +6,6 @@ requests==2.32.4
 soupsieve==2.7
 typing_extensions==4.14.0
 urllib3==2.5.0
+# Added for scraper dependencies
+pymongo
+selenium
