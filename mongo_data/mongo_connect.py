@@ -7,4 +7,4 @@ CONNECTION_STRING = f"mongodb+srv://pricewatch:{DB_PASSWORD}@pricewatch.mddfv3l.
 client = MongoClient(CONNECTION_STRING)
 
 # Example: Access a database (replace 'your_database_name' with the actual name)
-db = client['pricewatch']  # TODO: Replace with your actual database name
+db = client['pricewatch']  # TODO: Replace with your actual database name``
