@@ -13,10 +13,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from datetime import datetime
 from mongo_data.mongo_connect import db
 
-url = input("Enter the product URL: ")
+#url = input("Enter the product URL: ")
 
 # ----- CONFIG -----
-PRODUCT_URL = url
+PRODUCT_URL = "https://www.reliancedigital.in/product/lg-7-kg-top-loading-fully-automatic-washing-machine-t70spsf2z"
 
 
 # ------------------
