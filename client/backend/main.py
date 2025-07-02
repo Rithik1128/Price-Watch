@@ -1,4 +1,10 @@
-from fastapi import FastAPI, Request
+import sys
+import os
+
+# Add the project root to the Python path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..\\..')))
+
+from fastapi import FastAPI, Request, Depends
 from starlette.middleware.sessions import SessionMiddleware
 from authlib.integrations.starlette_client import OAuth
 from fastapi.responses import RedirectResponse
@@ -6,6 +12,8 @@ from dotenv import load_dotenv
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from user_db import add_or_update_user
+from mongo_data.db_handler import add_product_for_user, get_products_for_user
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -17,11 +25,21 @@ app.add_middleware(SessionMiddleware, secret_key=os.environ["SECRET_KEY"])
 # CORS config for React frontend (Vite default port: 5173)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class Product(BaseModel):
+    product_url: str
+
+# Dependency to get the current user from the session
+def get_current_user(request: Request):
+    user = request.session.get("user")
+    if not user:
+        return None
+    return user
 
 # OAuth setup with Authlib (✅ includes api_base_url fix)
 oauth = OAuth()
@@ -71,3 +89,21 @@ async def profile(request: Request):
 async def logout(request: Request):
     request.session.pop("user", None)
     return {"message": "Logged out"}
+
+@app.post("/products")
+async def track_product(product: Product, user: dict = Depends(get_current_user)):
+    if not user:
+        return {"error": "Unauthorized"}, 401
+    
+    user_id = user.get("sub") # Using Google's 'sub' as the unique user ID
+    result = add_product_for_user(user_id, product.product_url)
+    return result
+
+@app.get("/products")
+async def get_tracked_products(user: dict = Depends(get_current_user)):
+    if not user:
+        return {"error": "Unauthorized"}, 401
+
+    user_id = user.get("sub")
+    products = get_products_for_user(user_id)
+    return products
