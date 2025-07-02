@@ -9,3 +9,4 @@ urllib3==2.5.0
 # Added for scraper dependencies
 pymongo
 selenium
+python-dotenv

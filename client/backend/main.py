@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from dotenv import load_dotenv
 import os
 from fastapi.middleware.cors import CORSMiddleware
+from user_db import add_or_update_user
 
 load_dotenv()
 
@@ -51,6 +52,9 @@ async def auth_callback(request: Request):
     userinfo_endpoint = oauth.google.server_metadata["userinfo_endpoint"]
     user = await oauth.google.get(userinfo_endpoint, token=token)
     user_data = user.json()
+
+    # Save user data to the database
+    add_or_update_user(user_data)
 
     request.session["user"] = user_data
     return RedirectResponse(url="http://localhost:3000/")
