@@ -4,25 +4,18 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import csv
 import os
 from datetime import datetime
-from pymongo import MongoClient
-from dotenv import load_dotenv
+import sys
 
-load_dotenv()
+# Add the project root to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from mongo_data.db_handler import log_price_to_mongodb
 
 
 # ----- CONFIG -----
 PRODUCT_URL = "https://www.reliancedigital.in/product/lg-7-kg-top-loading-fully-automatic-washing-machine-t70spsf2z"
-CSV_FILE = "../price_history.csv"
-MONGO_CONNECTION_STRING = os.getenv("MONGO_CONNECTION_STRING")
-if not MONGO_CONNECTION_STRING:
-    raise ValueError("No MONGO_CONNECTION_STRING found in environment variables. Please set it before running the script.")
-
-
-MONGO_DB_NAME = "pricewatch"
-MONGO_COLLECTION_NAME = "products"
 
 
 # ------------------
@@ -54,40 +47,6 @@ def get_product_title(driver):
     except:
         return "Unknown Product"
 
-def log_price_to_mongodb(product_name, price):
-    """Logs the product name and price to MongoDB."""
-    try:
-        client = MongoClient(MONGO_CONNECTION_STRING)
-        db = client[MONGO_DB_NAME]
-        collection = db[MONGO_COLLECTION_NAME]
-        
-        document = {
-            "product_name": product_name,
-            "price": price,
-            "timestamp": datetime.now()
-        }
-        
-        collection.insert_one(document)
-        print("[INFO] Logged price to MongoDB.")
-        
-    except Exception as e:
-        print(f"[ERROR] Could not log price to MongoDB: {e}")
-    finally:
-        if 'client' in locals() and client:
-            client.close()
-
-def log_price(product_name, price):
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    file_exists = os.path.exists(CSV_FILE)
-    
-    with open(CSV_FILE, mode="a", newline='', encoding="utf-8") as file:
-        writer = csv.writer(file)
-        if not file_exists:
-            writer.writerow(["Time", "Product", "Price"])
-        writer.writerow([now, product_name, price])
-
-    print(f"[LOG] {now} | {product_name} | {price}")
-
 def main():
     print(">> Starting Price Watcher")
     browser = init_browser()
@@ -97,7 +56,6 @@ def main():
         if price:
             print(f"✅ PRICE FOUND: {price}")
             product_name = get_product_title(browser)
-            log_price(product_name, price)
             log_price_to_mongodb(product_name, price)
         else:
             print("[FAIL] Price not found.")
