@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-cluster = pymongo.MongoClient(os.getenv('MONGO_URI'))
+cluster = pymongo.MongoClient(os.getenv('MONGO_CONNECTION_STRING'))
 db = cluster["pricewatch"]
 collection = db["products"]
 
