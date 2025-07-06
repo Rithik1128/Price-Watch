@@ -22,6 +22,27 @@ build/
 # VS Code settings
 .vscode/
 
+# Data files (contains scraped data - should not be in version control)
+*.csv
+price_history.csv
+
+# Logs
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
 # OS files
 .DS_Store
 Thumbs.db
+
+# IDE files
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
